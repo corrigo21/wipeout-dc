@@ -370,7 +370,7 @@ vec2i_t platform_screen_size(void) {
 	return screen_size;
 }
 
-KOS_INIT_FLAGS(INIT_DEFAULT);
+KOS_INIT_FLAGS(INIT_DEFAULT | INIT_QUIET);
 int main(int argc, char *argv[]) {
 	// Figure out the absolute asset and userdata paths. These may either be
 	// supplied at build time through -DPATH_ASSETS=.. and -DPATH_USERDATA=..
