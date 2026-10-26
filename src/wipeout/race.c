@@ -103,6 +103,95 @@ void race_init(void) {
 extern int sprites_to_draw;
 void draw_all_sprites(void);
 extern void ShakeScreen(void);
+
+// Split screen layout. Every viewport is aligned on 32 pixels tiles (the
+// hardware clips on tiles), with a black band between viewports:
+// 2 players: two strips of 640x224, 4 players: four quarters of 320x224.
+static void race_viewport_rect(int player, int *x, int *y, int *w, int *h) {
+	if (g.num_players == 2) {
+		*x = 0;
+		*y = (player == 0) ? 0 : 256;
+		*w = 640;
+		*h = 224;
+	}
+	else {
+		*x = (player & 1) ? 320 : 0;
+		*y = (player & 2) ? 256 : 0;
+		*w = 320;
+		*h = 224;
+	}
+}
+
+static void race_draw_split(void) {
+	int x, y, w, h;
+
+	// Pass 1, opaque list: the sky of every viewport
+	for (int p = 0; p < g.num_players; p++) {
+		race_viewport_rect(p, &x, &y, &w, &h);
+		render_set_viewport(x, y, w, h);
+
+		camera_t *camera = camera_of_player(p);
+		render_set_view(camera->position, camera->angle);
+		scene_draw_sky(camera);
+	}
+
+	// Pass 2, transparent list: everything else, viewport by viewport
+	render_begin_transparent_list();
+
+	int saved_ui_scale = ui_get_scale();
+	for (int p = 0; p < g.num_players; p++) {
+		race_viewport_rect(p, &x, &y, &w, &h);
+		render_set_viewport(x, y, w, h);
+
+		camera_t *camera = camera_of_player(p);
+		g.render_pilot = g.human_pilot[p];
+
+		render_set_view(camera->position, camera->angle);
+
+		scene_draw_objects(camera);
+
+		render_set_cull_backface(false);
+		track_draw(camera);
+		render_set_cull_backface(true);
+
+		ships_draw();
+		for (int d = 0; d < g.num_players; d++) {
+			droid_draw(droid_of_player(d));
+		}
+
+		weapons_draw();
+		particles_draw();
+
+		// deferred trees and other things
+		if (sprites_to_draw) {
+			render_set_depth_write(false);
+			draw_all_sprites();
+			render_set_depth_write(true);
+		}
+
+		// Draw 2d, in the viewport
+		render_set_view_2d();
+		ui_set_scale(1);
+		if (flags_is(g.ships[g.render_pilot].flags, SHIP_RACING)) {
+			hud_draw(&g.ships[g.render_pilot]);
+		}
+		ui_set_scale(saved_ui_scale);
+	}
+
+	// Menus use the whole screen
+	render_reset_viewport();
+	g.render_pilot = g.pilot;
+	render_set_view_2d();
+
+	if (active_menu) {
+		if (!menu_is_scroll_text) {
+			vec2i_t size = render_size();
+			render_push_2d(vec2i(0, 0), size, rgba(0, 0, 0, 128), RENDER_NO_TEXTURE);
+		}
+		menu_update(active_menu);
+	}
+}
+
 void race_update(void) {
 	if (is_paused) {
 		if (!active_menu) {
@@ -114,8 +203,11 @@ void race_update(void) {
 	}
 	else {
 		ships_update();
-		droid_update(&g.droid, &g.ships[g.pilot]);
-		camera_update(&g.camera, &g.ships[g.pilot], &g.droid);
+		for (int p = 0; p < g.num_players; p++) {
+			ship_t *player_ship = &g.ships[g.human_pilot[p]];
+			droid_update(droid_of_player(p), player_ship);
+			camera_update(camera_of_player(p), player_ship, droid_of_player(p));
+		}
 		ShakeScreen();
 		weapons_update();
 		particles_update();
@@ -144,6 +236,12 @@ void race_update(void) {
 		else if (active_menu == NULL && (input_pressed(A_MENU_START) || input_pressed(A_MENU_QUIT))) {
 			race_pause();
 		}
+	}
+
+	g.render_pilot = g.pilot;
+	if (g.num_players > 1) {
+		race_draw_split();
+		return;
 	}
 
 	// Draw 3D
@@ -215,10 +313,15 @@ void race_start(void) {
 	} else {
 		render_reset_proj(96000.0f);
 	}
-	camera_init(&g.camera, g.track.sections);
-	g.camera.update_func = camera_update_race_intro;
+	g.render_pilot = g.pilot;
+	for (int p = 0; p < g.num_players; p++) {
+		camera_init(camera_of_player(p), g.track.sections);
+		camera_of_player(p)->update_func = camera_update_race_intro;
+	}
 	ships_init(g.track.sections);
-	droid_init(&g.droid, &g.ships[g.pilot]);
+	for (int p = 0; p < g.num_players; p++) {
+		droid_init(droid_of_player(p), &g.ships[g.human_pilot[p]]);
+	}
 	particles_init();
 	weapons_init();
 

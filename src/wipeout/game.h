@@ -243,8 +243,13 @@ typedef struct {
 	pilot_points_t race_ranks[NUM_PILOTS];
 	pilot_points_t championship_ranks[NUM_PILOTS];
 
+	// Player 0 uses camera and droid. Other human players use camera_p and
+	// droid_p (see camera_of_player() and droid_of_player()).
 	camera_t camera;
 	droid_t droid;
+	camera_t camera_p[MAX_HUMAN_PLAYERS - 1];
+	droid_t droid_p[MAX_HUMAN_PLAYERS - 1];
+	int render_pilot; // ship of the viewport being drawn
 	ship_t ships[NUM_PILOTS];
 	track_t track;
 } game_t;
@@ -296,6 +301,14 @@ typedef struct {
 
 extern const game_def_t def;
 extern game_t g;
+
+static inline camera_t *camera_of_player(int player) {
+	return (player <= 0) ? &g.camera : &g.camera_p[player - 1];
+}
+
+static inline droid_t *droid_of_player(int player) {
+	return (player <= 0) ? &g.droid : &g.droid_p[player - 1];
+}
 extern save_t save;
 
 void game_init(void);

@@ -142,14 +142,14 @@ void ship_player_update_intro_general(ship_t *self) {
 
 	self->thrust_mag = clamp(self->thrust_mag, 0, self->thrust_max);
 
-	// View (only player 0 has a camera for now)
-	if (self->player_index == 0 && input_pressed(A_CHANGE_VIEW)) {
+	// View
+	if (input_pressed(A_CHANGE_VIEW)) {
 		if (flags_not(self->flags, SHIP_VIEW_INTERNAL)) {
-			g.camera.update_func = camera_update_race_internal;
+			camera_of_player(self->player_index)->update_func = camera_update_race_internal;
 			flags_add(self->flags, SHIP_VIEW_INTERNAL);
 		}
 		else {
-			g.camera.update_func = camera_update_race_external;
+			camera_of_player(self->player_index)->update_func = camera_update_race_external;
 			flags_rm(self->flags, SHIP_VIEW_INTERNAL);
 		}
 	}
@@ -282,14 +282,14 @@ void ship_player_update_race(ship_t *self) {
 	}
 	self->brake_left = clamp(self->brake_left, 0.0f, 256.0f);
 
-	// View (only player 0 has a camera for now)
-	if (self->player_index == 0 && input_pressed(A_CHANGE_VIEW)) {
+	// View
+	if (input_pressed(A_CHANGE_VIEW)) {
 		if (flags_not(self->flags, SHIP_VIEW_INTERNAL)) {
-			g.camera.update_func = camera_update_race_internal;
+			camera_of_player(self->player_index)->update_func = camera_update_race_internal;
 			flags_add(self->flags, SHIP_VIEW_INTERNAL);
 		}
 		else {
-			g.camera.update_func = camera_update_race_external;
+			camera_of_player(self->player_index)->update_func = camera_update_race_external;
 			flags_rm(self->flags, SHIP_VIEW_INTERNAL);
 		}
 	}
@@ -556,14 +556,11 @@ void ship_player_update_rescue(ship_t *self) {
 		flags_rm(self->flags, SHIP_IN_RESCUE);
 		flags_rm(self->flags, SHIP_VIEW_REMOTE);
 
-		if (self->player_index != 0) {
-			// no camera to restore for this player yet
-		}
-		else if (flags_is(self->flags, SHIP_VIEW_INTERNAL)) {
-			g.camera.update_func = camera_update_race_internal;
+		if (flags_is(self->flags, SHIP_VIEW_INTERNAL)) {
+			camera_of_player(self->player_index)->update_func = camera_update_race_internal;
 		}
 		else {
-			g.camera.update_func = camera_update_race_external;
+			camera_of_player(self->player_index)->update_func = camera_update_race_external;
 		}
 	}
 }
