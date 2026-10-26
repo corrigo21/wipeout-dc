@@ -133,7 +133,14 @@ void ships_update(void) {
 			}
 		}
 
-		if (flags_is(g.ships[g.pilot].flags, SHIP_RACING)) {
+		bool human_racing = false;
+		for (int p = 0; p < g.num_players; p++) {
+			if (flags_is(g.ships[g.human_pilot[p]].flags, SHIP_RACING)) {
+				human_racing = true;
+			}
+		}
+
+		if (human_racing) {
 			sort(g.race_ranks, len(g.race_ranks), sort_rank_compare);
 			for (int32_t i = 0; i < len(g.ships); i++) {
 				g.ships[g.race_ranks[i].pilot].position_rank = i + 1;
@@ -163,14 +170,14 @@ void ships_draw(void) {
 			continue;
 		}
 
-		if (i == g.pilot) {
+		if (i == g.render_pilot) {
 			draw_this |= (1 << i);
 		} else {
 #define VIS_TEST_DIST 20
 			int distance = VIS_TEST_DIST;
 			int sc = g.track.section_count;
 
-			int pilot_secnum = g.ships[g.pilot].section_num;
+			int pilot_secnum = g.ships[g.render_pilot].section_num;
 			int other_secnum = g.ships[i].section_num;
 
 			if (abs(other_secnum - pilot_secnum) < VIS_TEST_DIST) {
@@ -649,8 +656,8 @@ void ship_update(ship_t *self) {
 				self->weapon_type = WEAPON_TYPE_TURBO;
 			}
 
-			if (self->lap == NUM_LAPS && self->pilot == g.pilot) {
-				race_end();
+			if (self->lap == NUM_LAPS && self->player_index >= 0) {
+				race_player_finished(self->player_index);
 			}
 		}
 	}

@@ -32,6 +32,7 @@
 
 static bool is_paused = false;
 static bool menu_is_scroll_text = false;
+static int players_finished = 0; // bit mask, one bit per human player
 static float attract_start_time;
 static menu_t *active_menu = NULL;
 extern volatile uint32_t last_five_tracks[5];
@@ -314,6 +315,7 @@ void race_start(void) {
 		render_reset_proj(96000.0f);
 	}
 	g.render_pilot = g.pilot;
+	players_finished = 0;
 	for (int p = 0; p < g.num_players; p++) {
 		camera_init(camera_of_player(p), g.track.sections);
 		camera_of_player(p)->update_func = camera_update_race_intro;
@@ -357,6 +359,28 @@ void race_restart(void) {
 
 static bool sort_points_compare(pilot_points_t *pa, pilot_points_t *pb) {
 	return (pa->points < pb->points);
+}
+
+// Single player: same as race_end(). Several players: a player who finishes
+// gets his ship released (autopilot), the race ends when all of them finished.
+void race_player_finished(int player) {
+	if (g.num_players <= 1) {
+		race_end();
+		return;
+	}
+
+	players_finished |= (1 << player);
+
+	ship_t *ship = &g.ships[g.human_pilot[player]];
+	flags_rm(ship->flags, SHIP_RACING);
+	ship->remote_thrust_max = 3160;
+	ship->remote_thrust_mag = 32;
+	ship->speed = 3160;
+	camera_of_player(player)->update_func = camera_update_attract_random;
+
+	if (players_finished == ((1 << g.num_players) - 1)) {
+		race_end();
+	}
 }
 
 void race_end(void) {

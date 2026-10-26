@@ -46,6 +46,10 @@ static int vp_split = 0;
 static uint32_t vp_clip_bits = 0;
 static float vp_ox = 0.0f, vp_oy = 0.0f, vp_hw = 320.0f, vp_hh = 240.0f;
 static float proj_x = 1.0f, proj_f = 1.0f;
+
+// Split screen: horizontal field of view compared to the full screen one.
+// Lower than 1.0 gives a wider angle (more of the track around the ship).
+#define SPLIT_FOV_SCALE 0.9f
 static vec2i_t full_screen_size;
 
 #define NEAR_PLANE 16.0f
@@ -420,10 +424,11 @@ void render_set_viewport(int x, int y, int w, int h) {
 	screen_size = split ? vec2i(w, h) : full_screen_size;
 
 	// Keep the horizontal field of view, adapt the vertical one
-	float sy = split ? proj_x * ((float)w / (float)h) : proj_f;
-	projection_mat.m[0] = proj_x;
+	float sx = split ? proj_x * SPLIT_FOV_SCALE : proj_x;
+	float sy = split ? sx * ((float)w / (float)h) : proj_f;
+	projection_mat.m[0] = sx;
 	projection_mat.m[5] = sy;
-	vp_mat.m[0] = proj_x;
+	vp_mat.m[0] = sx;
 	vp_mat.m[5] = sy;
 
 	if (split) {
