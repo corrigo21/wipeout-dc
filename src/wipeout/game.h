@@ -9,6 +9,7 @@
 #include "track.h"
 
 #define NUM_AI_OPPONENTS 7
+#define MAX_HUMAN_PLAYERS 4
 #define NUM_PILOTS_PER_TEAM 2
 #define NUM_NON_BONUS_CIRCUTS 6
 #define NUM_MUSIC_TRACKS 11
@@ -224,6 +225,10 @@ typedef struct {
 	int team;
 	int pilot;
 	int circut;
+
+	// Human players. human_pilot[0] is always the same as pilot.
+	int num_players;
+	int human_pilot[MAX_HUMAN_PLAYERS];
 	bool is_attract_mode;
 	bool show_credits;
 

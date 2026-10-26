@@ -1,6 +1,7 @@
 #include "../mem.h"
 #include "../utils.h"
 #include "../system.h"
+#include "../input.h"
 
 #include "object.h"
 #include "scene.h"
@@ -252,7 +253,14 @@ void ship_init(ship_t *self, section_t *section, int pilot, int inv_start_rank) 
 	self->update_timer = UPDATE_TIME_INITIAL;
 	self->position_rank = NUM_PILOTS - inv_start_rank;
 
-	if (pilot == g.pilot) {
+	self->player_index = -1;
+	for (int p = 0; p < g.num_players; p++) {
+		if (g.human_pilot[p] == pilot) {
+			self->player_index = p;
+		}
+	}
+
+	if (self->player_index >= 0) {
 		self->update_func = ship_player_update_intro;
 		self->remote_thrust_max = 2900;
 		self->remote_thrust_mag = 46;
@@ -566,7 +574,7 @@ void ship_update(ship_t *self) {
 		self->weapon_type == WEAPON_TYPE_NONE &&
 		track_collect_pickups(face)
 	) {
-		if (self->pilot == g.pilot) {
+		if (self->player_index >= 0) {
 			sfx_play(SFX_POWERUP);
 			if (flags_is(self->flags, SHIP_SHIELDED)) {
 				self->weapon_type = weapon_get_random_type(WEAPON_CLASS_PROJECTILE);
@@ -582,14 +590,17 @@ void ship_update(ship_t *self) {
 
 	self->last_impact_time += system_tick();
 
-	// Call the active player/ai update function
+	// Call the active player/ai update function. Human players read their
+	// own controller.
+	input_set_current_player(self->player_index >= 0 ? self->player_index : 0);
 	(self->update_func)(self);
+	input_set_current_player(0);
 
 	// Animate the exhaust plume
 
 	int exhaust_len;
 
-	if (self->pilot == g.pilot) {
+	if (self->player_index >= 0) {
 		// get the z exhaust_len related to speed or thrust
 		exhaust_len = self->thrust_mag * 0.0625;
 		exhaust_len += self->speed * 0.00390625;

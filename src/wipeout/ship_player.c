@@ -66,7 +66,9 @@ void ship_player_update_intro_await_three(ship_t *self) {
 	ship_player_update_intro_general(self);
 
 	if (self->update_timer <= UPDATE_TIME_THREE) {
-		sfx_play(SFX_VOICE_COUNT_3);
+		if (self->player_index == 0) {
+			sfx_play(SFX_VOICE_COUNT_3);
+		}
 		self->update_func = ship_player_update_intro_await_two;
 	}
 }
@@ -76,7 +78,9 @@ void ship_player_update_intro_await_two(ship_t *self) {
 
 	if (self->update_timer <= UPDATE_TIME_TWO) {
 		scene_set_start_booms(1);
-		sfx_play(SFX_VOICE_COUNT_2);
+		if (self->player_index == 0) {
+			sfx_play(SFX_VOICE_COUNT_2);
+		}
 		self->update_func = ship_player_update_intro_await_one;
 	}
 }
@@ -86,7 +90,9 @@ void ship_player_update_intro_await_one(ship_t *self) {
 
 	if (self->update_timer <= UPDATE_TIME_ONE) {
 		scene_set_start_booms(2);
-		sfx_play(SFX_VOICE_COUNT_1);
+		if (self->player_index == 0) {
+			sfx_play(SFX_VOICE_COUNT_1);
+		}
 		self->update_func = ship_player_update_intro_await_go;
 	}
 }
@@ -96,7 +102,9 @@ void ship_player_update_intro_await_go(ship_t *self) {
 
 	if (self->update_timer <= UPDATE_TIME_GO) {
 		scene_set_start_booms(3);
-		sfx_play(SFX_VOICE_COUNT_GO);
+		if (self->player_index == 0) {
+			sfx_play(SFX_VOICE_COUNT_GO);
+		}
 		
 		if (flags_is(self->flags, SHIP_RACING)) {
 			// Check for stall
@@ -134,8 +142,8 @@ void ship_player_update_intro_general(ship_t *self) {
 
 	self->thrust_mag = clamp(self->thrust_mag, 0, self->thrust_max);
 
-	// View
-	if (input_pressed(A_CHANGE_VIEW)) {
+	// View (only player 0 has a camera for now)
+	if (self->player_index == 0 && input_pressed(A_CHANGE_VIEW)) {
 		if (flags_not(self->flags, SHIP_VIEW_INTERNAL)) {
 			g.camera.update_func = camera_update_race_internal;
 			flags_add(self->flags, SHIP_VIEW_INTERNAL);
@@ -274,8 +282,8 @@ void ship_player_update_race(ship_t *self) {
 	}
 	self->brake_left = clamp(self->brake_left, 0.0f, 256.0f);
 
-	// View
-	if (input_pressed(A_CHANGE_VIEW)) {
+	// View (only player 0 has a camera for now)
+	if (self->player_index == 0 && input_pressed(A_CHANGE_VIEW)) {
 		if (flags_not(self->flags, SHIP_VIEW_INTERNAL)) {
 			g.camera.update_func = camera_update_race_internal;
 			flags_add(self->flags, SHIP_VIEW_INTERNAL);
@@ -548,7 +556,10 @@ void ship_player_update_rescue(ship_t *self) {
 		flags_rm(self->flags, SHIP_IN_RESCUE);
 		flags_rm(self->flags, SHIP_VIEW_REMOTE);
 
-		if (flags_is(self->flags, SHIP_VIEW_INTERNAL)) {
+		if (self->player_index != 0) {
+			// no camera to restore for this player yet
+		}
+		else if (flags_is(self->flags, SHIP_VIEW_INTERNAL)) {
 			g.camera.update_func = camera_update_race_internal;
 		}
 		else {
