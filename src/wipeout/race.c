@@ -21,9 +21,12 @@
 #include "ship_ai.h"
 
 // While there are no menus to choose the number of players, every extra
-// controller plugged in takes over one more ship (2 players maximum for now).
+// controller plugged in takes over one more ship (up to MULTIPLAYER_MAX_PLAYERS).
 #ifndef MULTIPLAYER_TEST
 #define MULTIPLAYER_TEST 1
+#endif
+#ifndef MULTIPLAYER_MAX_PLAYERS
+#define MULTIPLAYER_MAX_PLAYERS 4
 #endif
 #include "ingame_menus.h"
 
@@ -297,7 +300,7 @@ void race_start(void) {
 #if MULTIPLAYER_TEST
 	if (!g.is_attract_mode && g.race_type != RACE_TYPE_TIME_TRIAL) {
 		int controllers = platform_num_controllers();
-		for (int k = 1; k < NUM_PILOTS && g.num_players < controllers && g.num_players < 2; k++) {
+		for (int k = 1; k < NUM_PILOTS && g.num_players < controllers && g.num_players < MULTIPLAYER_MAX_PLAYERS; k++) {
 			g.human_pilot[g.num_players++] = (g.pilot + k) % NUM_PILOTS;
 		}
 	}
