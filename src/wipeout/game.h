@@ -227,6 +227,7 @@ typedef struct {
 	int circut;
 
 	// Human players. human_pilot[0] is always the same as pilot.
+	int players_chosen; // number of players chosen in the menus
 	int num_players;
 	int human_pilot[MAX_HUMAN_PLAYERS];
 	bool is_attract_mode;

@@ -22,8 +22,10 @@
 
 // While there are no menus to choose the number of players, every extra
 // controller plugged in takes over one more ship (up to MULTIPLAYER_MAX_PLAYERS).
+// 1: ignore the menu, every controller plugged in is a player (for testing)
+// 0: the number of players comes from the menu
 #ifndef MULTIPLAYER_TEST
-#define MULTIPLAYER_TEST 1
+#define MULTIPLAYER_TEST 0
 #endif
 #ifndef MULTIPLAYER_MAX_PLAYERS
 #define MULTIPLAYER_MAX_PLAYERS 4
@@ -297,14 +299,26 @@ void race_start(void) {
 	// Human players. Player 0 is the one who picked a ship in the menus.
 	g.num_players = 1;
 	g.human_pilot[0] = g.pilot;
-#if MULTIPLAYER_TEST
 	if (!g.is_attract_mode && g.race_type != RACE_TYPE_TIME_TRIAL) {
+		int wanted = g.players_chosen;
+#if MULTIPLAYER_TEST
+		wanted = MULTIPLAYER_MAX_PLAYERS;
+#endif
+		// never more players than controllers plugged in
 		int controllers = platform_num_controllers();
-		for (int k = 1; k < NUM_PILOTS && g.num_players < controllers && g.num_players < MULTIPLAYER_MAX_PLAYERS; k++) {
+		if (wanted > controllers) {
+			wanted = controllers;
+		}
+		if (wanted > MULTIPLAYER_MAX_PLAYERS) {
+			wanted = MULTIPLAYER_MAX_PLAYERS;
+		}
+		if (g.race_type != RACE_TYPE_SINGLE && !MULTIPLAYER_TEST) {
+			wanted = 1;
+		}
+		for (int k = 1; k < NUM_PILOTS && g.num_players < wanted; k++) {
 			g.human_pilot[g.num_players++] = (g.pilot + k) % NUM_PILOTS;
 		}
 	}
-#endif
 
 	render_state.in_race = 1;
 	active_menu = NULL;
