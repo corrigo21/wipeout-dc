@@ -698,7 +698,8 @@ static void page_players_draw(menu_t *menu, int data) {
 static void page_players_init(menu_t *menu) {
 	static const char *labels[MAX_HUMAN_PLAYERS] = {"1 PLAYER", "2 PLAYERS", "3 PLAYERS", "4 PLAYERS"};
 
-	menu_page_t *page = menu_push(menu, "SELECT NUMBER OF PLAYERS", page_players_draw);
+	menu_page_t *page = menu_push(menu, "SELECT NUMBER", page_players_draw);
+	page->subtitle = "OF PLAYERS";
 	flags_add(page->layout_flags, MENU_FIXED);
 	if (platform_screen_size().y == 360) {
 		page->title_pos = vec2i(0, 20);

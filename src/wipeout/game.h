@@ -310,6 +310,25 @@ static inline camera_t *camera_of_player(int player) {
 static inline droid_t *droid_of_player(int player) {
 	return (player <= 0) ? &g.droid : &g.droid_p[player - 1];
 }
+
+// Split screen draws the track once per player: shorten the draw distances
+// to keep a decent frame rate. These factors apply to distances (1.0 = the
+// normal distance), lower them for more speed, raise them for a farther view.
+#define SPLIT_DRAW_DIST_2_PLAYERS 0.85f
+#define SPLIT_DRAW_DIST_3_4_PLAYERS 0.70f
+
+// Number of track sections within which other ships are drawn
+#define SHIP_VISIBLE_SECTIONS 20
+#define SHIP_VISIBLE_SECTIONS_3_4_PLAYERS 12
+
+// Factor to apply to the squared draw distances of the track sections
+static inline float draw_dist_factor_sq(void) {
+	if (g.num_players <= 1) {
+		return 1.0f;
+	}
+	float f = (g.num_players == 2) ? SPLIT_DRAW_DIST_2_PLAYERS : SPLIT_DRAW_DIST_3_4_PLAYERS;
+	return f * f;
+}
 extern save_t save;
 
 void game_init(void);

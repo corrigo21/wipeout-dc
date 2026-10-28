@@ -148,7 +148,7 @@ void scene_draw(camera_t *camera) {
 
 void scene_draw_objects(camera_t *camera) {
 	// scenery/object draw distance for the ship of the current viewport
-	float drawdist = g.track.sections[g.ships[g.render_pilot].section_num].scenedist;
+	float drawdist = g.track.sections[g.ships[g.render_pilot].section_num].scenedist * draw_dist_factor_sq();
 
 	// Calculate the camera forward vector, so we can cull everything that's
 	// behind. Ideally we'd want to do a full frustum culling here. FIXME.

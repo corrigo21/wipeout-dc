@@ -157,6 +157,7 @@ void ships_reset_exhaust_plumes(void) {
 
 void ships_draw(void) {
 	uint8_t draw_this = 0;
+	int vis_test_dist = (g.num_players > 2) ? SHIP_VISIBLE_SECTIONS_3_4_PLAYERS : SHIP_VISIBLE_SECTIONS;
 
 	// Ship models
 	render_set_depth_write(true);
@@ -164,7 +165,7 @@ void ships_draw(void) {
 
 	for (int i = 0; i < len(g.ships); i++) {
 		if (
-			(flags_is(g.ships[i].flags, SHIP_VIEW_INTERNAL) && flags_not(g.ships[i].flags, SHIP_IN_RESCUE)) ||
+			(i == g.render_pilot && flags_is(g.ships[i].flags, SHIP_VIEW_INTERNAL) && flags_not(g.ships[i].flags, SHIP_IN_RESCUE)) ||
 			(g.race_type == RACE_TYPE_TIME_TRIAL && i != g.pilot)
 		) {
 			continue;
@@ -173,7 +174,7 @@ void ships_draw(void) {
 		if (i == g.render_pilot) {
 			draw_this |= (1 << i);
 		} else {
-#define VIS_TEST_DIST 20
+#define VIS_TEST_DIST vis_test_dist
 			int distance = VIS_TEST_DIST;
 			int sc = g.track.section_count;
 
